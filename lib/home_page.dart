@@ -3,7 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'database_helper.dart';
 import 'household_page.dart';
 import 'schedule_page.dart';
-import 'transaction_add_page.dart';
+import 'meal_detail_page.dart';
 import 'package:lottie/lottie.dart';
 
 class HomePage extends StatefulWidget {
@@ -31,6 +31,13 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  List<DateTime> _getWeekDays() {
+    DateTime now = DateTime.now();
+    int currentWeekday = now.weekday;
+    DateTime sunday = now.subtract(Duration(days: currentWeekday % 7));
+    return List.generate(7, (index) => sunday.add(Duration(days: index)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,7 +50,7 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 const Text(
                   '가계부',
@@ -105,7 +112,7 @@ class _HomePageState extends State<HomePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const TransactionAddPage()),
+                          builder: (context) => const MealDetailPage()),
                     );
                   },
                   child: const Text('상세'),
@@ -113,12 +120,21 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                _buildImageCard('2월 9일 일요일', '이미지'),
-                _buildImageCard('2월 10일 월요일', '이미지'),
-              ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _getWeekDays().map((date) {
+                  return Container(
+                    width: 120,
+                    child: _buildImageCard(
+                      '${date.month}월 ${date.day}일 ${_getWeekdayName(date.weekday)}',
+                      date.weekday % 2 == 0
+                          ? 'assets/food/good_animation.json'
+                          : 'assets/food/bad_animation.json',
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -197,11 +213,34 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  String _getWeekdayName(int weekday) {
+    switch (weekday) {
+      case 1:
+        return '월요일';
+      case 2:
+        return '화요일';
+      case 3:
+        return '수요일';
+      case 4:
+        return '목요일';
+      case 5:
+        return '금요일';
+      case 6:
+        return '토요일';
+      case 7:
+        return '일요일';
+      default:
+        return '';
+    }
+  }
+
   Widget _buildSummaryCard(String title, String amount, String description) {
     return Card(
       child: ListTile(
         leading: Lottie.asset(
-          title == '총 수입' ? 'assets/income_animation.json' : 'assets/expense_animation.json',
+          title == '총 수입'
+              ? 'assets/household/income_animation.json'
+              : 'assets/household/expense_animation.json',
           width: 50,
           height: 50,
         ),
@@ -234,7 +273,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildImageCard(String date, String image) {
+  Widget _buildImageCard(String date, String animationPath) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -242,9 +281,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             Text(date, style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 8),
-            Text(image,
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Lottie.asset(animationPath, width: 100, height: 100),
           ],
         ),
       ),
